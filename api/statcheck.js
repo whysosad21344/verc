@@ -1,18 +1,27 @@
 // api/statcheck.js
+
 module.exports = async (req, res) => {
   try {
-    // Ensure the request is a POST and contains a body
+    // Check if the request method is POST
     if (req.method !== 'POST') {
-      return res.status(405).json({
-        success: false,
-        message: 'Only POST requests are allowed',
+      return res.status(405).json({ 
+        success: false, 
+        message: 'Only POST requests are allowed' 
       });
     }
 
-    // Check if the body is parsed and if `username` exists
-    const { username } = req.body || {};
+    // Ensure the body is parsed correctly for JSON
+    if (!req.body) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Request body is empty or not parsed properly' 
+      });
+    }
 
-    // If username is missing, respond with an error
+    // Parse the body as JSON if it's not parsed automatically
+    const { username } = req.body || {};  // Default to an empty object if req.body is undefined
+
+    // If no username is provided, return a bad request error
     if (!username) {
       return res.status(400).json({
         success: false,
@@ -20,20 +29,20 @@ module.exports = async (req, res) => {
       });
     }
 
-    // In-memory storage for users data (this will reset after each request)
-    let usersData = {}; // Temporary storage, ideally replace with a database
+    // In-memory storage for users data (temporary storage for this example)
+    let usersData = {}; // Should be replaced with a real database for production
 
-    // If username does not exist in the memory, initialize it
+    // Logic for checking if the username exists
     if (!usersData[username]) {
       usersData[username] = {}; // Initialize an empty stats object for this username
       console.log('Received username:', username); // Log the received username
-      res.status(200).json({
+      return res.status(200).json({
         success: true,
         message: 'Data received successfully',
         dateTime: new Date().toISOString(),
       });
     } else {
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         message: 'Username already received or invalid',
         dateTime: new Date().toISOString(),
@@ -41,7 +50,7 @@ module.exports = async (req, res) => {
     }
   } catch (error) {
     console.error('Error processing statcheck request:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: 'An error occurred while processing your request',
     });
